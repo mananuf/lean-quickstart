@@ -36,14 +36,19 @@ node_binary="$binary_path \
       $checkpoint_sync_flag"
 
 # Command when running as docker container
-node_docker="ghcr.io/lambdaclass/ethlambda:devnet4 \
-      --custom-network-config-dir /config \
+node_docker="ghcr.io/lambdaclass/ethlambda:devnet5 \
+      --genesis /config/config.yaml \
+      --validators /config/annotated_validators.yaml \
+      --bootnodes /config/nodes.yaml \
+      --validator-config /config/validator-config.yaml \
+      --hash-sig-keys-dir /config/hash-sig-keys \
       --gossipsub-port $quicPort \
-      --node-id $item \
-      --node-key /config/$item.key \
       --http-address 0.0.0.0 \
       --api-port $apiPort \
       --metrics-port $metricsPort \
+      --node-key /config/$item.key \
+      --node-id $item \
+      --data-dir /data \
       $attestation_committee_flag \
       $aggregator_flag \
       $checkpoint_sync_flag"
