@@ -258,12 +258,12 @@ if [ "$SHOULD_SKIP" == "true" ]; then
     echo ""
 else
     echo "   Generating keys for $VALIDATOR_COUNT validators..."
-    echo "   Using scheme: SIGTopLevelTargetSumLifetime32Dim64Base8"
+    echo "   Using scheme: XmssTargetSumLifetime32Dim42Base8"
     echo "   Key directory: $HASH_SIG_KEYS_DIR"
     echo ""
 
     # Generate hash-sig keys for all validators using Docker
-    # Scheme: SIGTopLevelTargetSumLifetime32Dim64Base8
+    # Scheme: XmssTargetSumLifetime32Dim42Base8
     # Active epochs: 2^ACTIVE_EPOCH (from validator-config.yaml)
     # Total lifetime: 2^32 (4,294,967,296)
     # Convert to absolute path for Docker volume mounting
@@ -796,7 +796,7 @@ echo "   PR: https://github.com/ethpandaops/eth-beacon-genesis/pull/36"
 echo ""
 echo "ℹ️  Hash-sig keys generated with:"
 echo "   Docker Image: $HASH_SIG_CLI_IMAGE"
-echo "   Scheme: SIGTopLevelTargetSumLifetime32Dim64Base8"
+echo "   Scheme: XmssTargetSumLifetime32Dim42Base8"
 echo "   Active Epochs: 2^$ACTIVE_EPOCH"
 echo "   Total Lifetime: 2^32 (4,294,967,296)"
 echo ""
