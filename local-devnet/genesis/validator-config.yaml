@@ -4,8 +4,9 @@ deployment_mode: local
 config:
   activeEpoch: 18
   keyType: "hash-sig"
-  # Optional; omit for default 1 (leanSpec src/lean_spec/subspecs/chain/config.py)
-  attestation_committee_count: 1
+  # 8 attestation subnets. 24 validators (indices 0..23) map to subnets by
+  # validator_index % 8, so each client lands one validator per subnet.
+  attestation_committee_count: 8
 # New-leanVM (a5909d18) 32-byte XMSS interop: gean (experimental, aggregator) +
 # ethlambda (devnet5-leanvm-main) + lantern (devnet5-leanvm-main). Genesis keys are
 # the 32-byte Dim42 scheme (XmssTargetSumLifetime32Dim42Base8) from hash-sig-cli 0.5.0.
@@ -18,7 +19,7 @@ validators:
     metricsPort: 8088
     apiPort: 5058
     isAggregator: true
-    count: 2
+    count: 8
   - name: "ethlambda_0"
     privkey: "299550529a79bc2dce003747c52fb0639465c893e00b0440ac66144d625e066a"
     enrFields:
@@ -27,7 +28,7 @@ validators:
     metricsPort: 8087
     apiPort: 8087
     isAggregator: false
-    count: 2
+    count: 8
   - name: "lantern_0"
     privkey: "d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5"
     enrFields:
@@ -37,4 +38,4 @@ validators:
     httpPort: 5054
     apiPort: 5054
     isAggregator: false
-    count: 2
+    count: 8
