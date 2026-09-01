@@ -1,26 +1,26 @@
 shuffle: roundrobin
-# devnet-5 leanVM on a SINGLE host: 32 nodes x 32 validators = 1024 validators.
-# Mirrors the run observed 2026-08-31 14:35-15:04 UTC (network=devnet-5):
-# 7 ethlambda, 7 grandine, 7 lantern, 7 gean, 4 ream; 8 attestation subnets.
+# devnet-5 leanVM, single host, sized to fit ~31GB RAM.
 #
-# All nodes share one IP, so ports are strided per node index and `subnet`
-# is set explicitly: with several client types on one IP the name suffix
-# alone is ambiguous to the tooling.
-#   quic 9001+i   metrics 8081+i   api 5051+i   subnet = i % 8
+# gean documents a ~12GiB working set per PROVING node (cmd/gean/memory.go:
+# proverMemoryFloorBytes), so a 31GB box supports only a few provers. This is
+# 6 nodes x 2 validators = 12 validators over 2 subnets, not the 32-node /
+# 1024-validator shape of the observed run, which needs one node per host.
 #
-# Aggregators: one per subnet (ethlambda_0, lantern_2, gean_7, grandine_12,
-# gean_17, lantern_27, ethlambda_29, grandine_30).
+# What it does preserve, which is what the aggregation investigation needs:
+#  - node_count (6) is a multiple of committee_count (2), so round-robin
+#    assignment puts every node's validators on a single subnet
+#  - one aggregator per subnet, gean_0 among them
+#  - >=2 validators per subnet, so an aggregate can reach the 2-signer minimum
 #
-# Node keys are derived deterministically here and are not the observed
-# run's keys; genesis is regenerated on deploy.
+# Ports strided per node: quic 9001+i, metrics 8081+i, api 5051+i.
 deployment_mode: ansible
 config:
   activeEpoch: 18
   keyType: "hash-sig"
-  attestation_committee_count: 8
+  attestation_committee_count: 2
 validators:
-  - name: "ethlambda_0"
-    privkey: "3ec2434dcfcbef1363fb13e9a4874d093ba5bbad29dbf14524152ef522344035"
+  - name: "gean_0"
+    privkey: "125d9d1c4234236859df61ffbdfe7b1907fc8de44ac4ee1b3bff311c642848f1"
     enrFields:
       ip: "100.99.168.92"
       quic: 9001
@@ -28,314 +28,54 @@ validators:
     apiPort: 5051
     subnet: 0
     isAggregator: true
-    count: 32
-  - name: "grandine_1"
-    privkey: "c3907f976b6249712fc8e37a6ace40a2b0f3b93a8733d3e96fa97d5a31ed2991"
+    count: 2
+  - name: "ethlambda_1"
+    privkey: "1cbac426df28c04ea11ef9ef43bf739e77ee28ea725b1304c08bf1ebac072274"
     enrFields:
       ip: "100.99.168.92"
       quic: 9002
     metricsPort: 8082
     apiPort: 5052
     subnet: 1
-    isAggregator: false
-    count: 32
-  - name: "lantern_2"
-    privkey: "3094f2fc69d3b5aef3dbad13839c42ed5b1859715c0ef86ed10b9aeca4cf021b"
+    isAggregator: true
+    count: 2
+  - name: "gean_2"
+    privkey: "e747185bdf71bc1a3856b451bf37e7a71b053cbf7cf610413aa071cb69fce5ea"
     enrFields:
       ip: "100.99.168.92"
       quic: 9003
     metricsPort: 8083
     apiPort: 5053
-    subnet: 2
-    isAggregator: true
-    count: 32
-  - name: "gean_3"
-    privkey: "cbcec3aaf65c2c76f5d2d08e92a0702ea18232042e816f0cedccc365d8388557"
+    subnet: 0
+    isAggregator: false
+    count: 2
+  - name: "grandine_3"
+    privkey: "dd947f669d313430b23b05bf0622e4a48024c3d1778f16a16c581d36be62373f"
     enrFields:
       ip: "100.99.168.92"
       quic: 9004
     metricsPort: 8084
     apiPort: 5054
-    subnet: 3
+    subnet: 1
     isAggregator: false
-    count: 32
-  - name: "ethlambda_4"
-    privkey: "388dd652d11a3ee36c25f0d9f512f3edaa6137c8a0582cced8cfe5690b00d3b3"
+    count: 2
+  - name: "lantern_4"
+    privkey: "23882b645f02d4fcd9549d960e1381e6729d6fccf6f458aab78de5ac29163a11"
     enrFields:
       ip: "100.99.168.92"
       quic: 9005
     metricsPort: 8085
     apiPort: 5055
-    subnet: 4
+    subnet: 0
     isAggregator: false
-    count: 32
+    count: 2
   - name: "ream_5"
-    privkey: "c7f04bb2ee69324bd4698725c821455baf2d5efe58bcbd971357f3ac3d7ad76b"
+    privkey: "1908b68b84b5f5c2cba83eb2bec18b0ab9fb2d2508b4d134fa0c47abe6bc2b8a"
     enrFields:
       ip: "100.99.168.92"
       quic: 9006
     metricsPort: 8086
     apiPort: 5056
-    subnet: 5
-    isAggregator: false
-    count: 32
-  - name: "lantern_6"
-    privkey: "3fb5b2f2ae8b915abb6fe9c5c3708d5d91ee27dc8393b645a78cd355ffe2f816"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9007
-    metricsPort: 8087
-    apiPort: 5057
-    subnet: 6
-    isAggregator: false
-    count: 32
-  - name: "gean_7"
-    privkey: "04a72aee887340c01a93edbd9db75b7e84c7211c63ac183415be55c5e1d8e1b0"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9008
-    metricsPort: 8088
-    apiPort: 5058
-    subnet: 7
-    isAggregator: true
-    count: 32
-  - name: "grandine_8"
-    privkey: "7217b644891c0a6b589525540a099376537b3693fd48f4dd71135d05105de269"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9009
-    metricsPort: 8089
-    apiPort: 5059
-    subnet: 0
-    isAggregator: false
-    count: 32
-  - name: "ream_9"
-    privkey: "0394872772fa157c91725161f1ad089d52d5a5f6d6f0c1422e53a6f0d7da5542"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9010
-    metricsPort: 8090
-    apiPort: 5060
     subnet: 1
     isAggregator: false
-    count: 32
-  - name: "gean_10"
-    privkey: "a57fca04d7d8b5371174701fe41583c0ce203a59a76e8e5f05808db2dc624ce5"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9011
-    metricsPort: 8091
-    apiPort: 5061
-    subnet: 2
-    isAggregator: false
-    count: 32
-  - name: "ethlambda_11"
-    privkey: "8129ee7735164e006e42ac46eed23f803275e21f63ed296a27fa2c71306dcd03"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9012
-    metricsPort: 8092
-    apiPort: 5062
-    subnet: 3
-    isAggregator: false
-    count: 32
-  - name: "grandine_12"
-    privkey: "7a7aafd82334951742606895356804d7c58eebe1b42564983996c89310819881"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9013
-    metricsPort: 8093
-    apiPort: 5063
-    subnet: 4
-    isAggregator: true
-    count: 32
-  - name: "lantern_13"
-    privkey: "2dd0b2c4c978f2952cb1fa30d0db0479ebd53b2eb1c29dc4b1866baece875a69"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9014
-    metricsPort: 8094
-    apiPort: 5064
-    subnet: 5
-    isAggregator: false
-    count: 32
-  - name: "ream_14"
-    privkey: "20eb86cd3e45e85e5f0547e29f025d266a609e0145eac84b40d1ac678d6c17e4"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9015
-    metricsPort: 8095
-    apiPort: 5065
-    subnet: 6
-    isAggregator: false
-    count: 32
-  - name: "ethlambda_15"
-    privkey: "fb826b22150140c52e0ece74f38257c6272086f006bd34ba5d48ba1c0e38e55e"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9016
-    metricsPort: 8096
-    apiPort: 5066
-    subnet: 7
-    isAggregator: false
-    count: 32
-  - name: "lantern_16"
-    privkey: "bbb8fefbd861c16269bbfb430331935f5689dd3135c7b4aef9eb16c21e4c3123"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9017
-    metricsPort: 8097
-    apiPort: 5067
-    subnet: 0
-    isAggregator: false
-    count: 32
-  - name: "gean_17"
-    privkey: "b2ae7792c91aa5cce4f0900e122c238f120797aa73b3418c9ce7f91b0f2e9daa"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9018
-    metricsPort: 8098
-    apiPort: 5068
-    subnet: 1
-    isAggregator: true
-    count: 32
-  - name: "ethlambda_18"
-    privkey: "014572c861877587d7163aca9ea94a9249e84dc787297f22726502fb3608b133"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9019
-    metricsPort: 8099
-    apiPort: 5069
-    subnet: 2
-    isAggregator: false
-    count: 32
-  - name: "grandine_19"
-    privkey: "d03f2a4def663c0b22637dd6846f2fa573b6394164988803e01cce57b1602add"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9020
-    metricsPort: 8100
-    apiPort: 5070
-    subnet: 3
-    isAggregator: false
-    count: 32
-  - name: "lantern_20"
-    privkey: "4e1bbb6fc58b0d746610e5858e27796adcea1a3a420defc699cdb2bae29cf61a"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9021
-    metricsPort: 8101
-    apiPort: 5071
-    subnet: 4
-    isAggregator: false
-    count: 32
-  - name: "gean_21"
-    privkey: "3f4dc794c2636eff8895843be31c28eb961abab2938baf200b4d673f94c69210"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9022
-    metricsPort: 8102
-    apiPort: 5072
-    subnet: 5
-    isAggregator: false
-    count: 32
-  - name: "ethlambda_22"
-    privkey: "6329db7266bae1aa609dba88aea0fac4956c8f5617a386782bb299cdefde1c9b"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9023
-    metricsPort: 8103
-    apiPort: 5073
-    subnet: 6
-    isAggregator: false
-    count: 32
-  - name: "grandine_23"
-    privkey: "5f80cfab7d4a7b88382fbd07800b425918f1bfefd9c72c3f42c67b9d7a677e02"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9024
-    metricsPort: 8104
-    apiPort: 5074
-    subnet: 7
-    isAggregator: false
-    count: 32
-  - name: "gean_24"
-    privkey: "e519f927d8c4a64a4c14a740548a86b72c1c437a07e8c38b4fc6fd9775ee7666"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9025
-    metricsPort: 8105
-    apiPort: 5075
-    subnet: 0
-    isAggregator: false
-    count: 32
-  - name: "lantern_25"
-    privkey: "8ef0ffe2f0cdec1741ab6601459cd98ad661c2a5a1053a8a9f057bdc24f96c64"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9026
-    metricsPort: 8106
-    apiPort: 5076
-    subnet: 1
-    isAggregator: false
-    count: 32
-  - name: "grandine_26"
-    privkey: "f716b22be9c494e19349033804fba74dcd9874a0132d68006021a8e5c2937979"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9027
-    metricsPort: 8107
-    apiPort: 5077
-    subnet: 2
-    isAggregator: false
-    count: 32
-  - name: "lantern_27"
-    privkey: "2fed59a5d7d371be490eacb832f0b592a3fe9679b10a366b6c537bf95fed74c6"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9028
-    metricsPort: 8108
-    apiPort: 5078
-    subnet: 3
-    isAggregator: true
-    count: 32
-  - name: "gean_28"
-    privkey: "74763b7786ca5d027c6f3f644ae2710d563f43516c831aad34c8f281127d70e3"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9029
-    metricsPort: 8109
-    apiPort: 5079
-    subnet: 4
-    isAggregator: false
-    count: 32
-  - name: "ethlambda_29"
-    privkey: "aa9cabd18320b58901ae612dea0a0d986590af3c77e41bd1fbb96fc33767f9ed"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9030
-    metricsPort: 8110
-    apiPort: 5080
-    subnet: 5
-    isAggregator: true
-    count: 32
-  - name: "grandine_30"
-    privkey: "1237eb64fe5d3d73ccbbbca65fe24e0c52f4f8d5b1677ccb198ae893f842f2b5"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9031
-    metricsPort: 8111
-    apiPort: 5081
-    subnet: 6
-    isAggregator: true
-    count: 32
-  - name: "ream_31"
-    privkey: "55949735fa5c09a41786ab3e00984b2c64167866440abaf726721f6d96424d6e"
-    enrFields:
-      ip: "100.99.168.92"
-      quic: 9032
-    metricsPort: 8112
-    apiPort: 5082
-    subnet: 7
-    isAggregator: false
-    count: 32
+    count: 2
