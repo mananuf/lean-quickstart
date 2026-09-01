@@ -76,9 +76,26 @@ for node_name in "${nodes[@]}"; do
     node_ip=$(yq eval ".validators[] | select(.name == \"$node_name\") | .enrFields.ip // \"127.0.0.1\"" "$VALIDATOR_CONFIG")
     node_quic=$(yq eval ".validators[] | select(.name == \"$node_name\") | .enrFields.quic // \"9000\"" "$VALIDATOR_CONFIG")
     
+# Addresses that belong to this machine. A node pinned to one of them runs on
+# the controller itself, so ansible must connect locally: SSH-ing to your own
+# address needs the host to trust its own key and otherwise fails with
+# "Permission denied (publickey,password)". Covers single-host devnets reached
+# by a routable/VPN address rather than 127.0.0.1.
+# Override with LEAN_ANSIBLE_LOCAL_IPS="ip1 ip2" if detection misses one.
+_local_ips=" 127.0.0.1 localhost ${LEAN_ANSIBLE_LOCAL_IPS:-} $(
+    { hostname -I 2>/dev/null
+      ip -4 -o addr show 2>/dev/null | awk '{split($4,a,"/"); print a[1]}'
+      ifconfig 2>/dev/null | awk '/inet /{print $2}'
+    } | tr '\n' ' '
+) "
+
+is_local_ip() {
+    case "$_local_ips" in *" $1 "*) return 0 ;; *) return 1 ;; esac
+}
+
     # Check if this is a remote deployment (IP is not localhost/127.0.0.1)
     is_remote=false
-    if [[ "$node_ip" != "127.0.0.1" ]] && [[ "$node_ip" != "localhost" ]]; then
+    if ! is_local_ip "$node_ip"; then
         is_remote=true
     fi
     
@@ -113,7 +130,8 @@ EOF
 
 while IFS= read -r ip; do
     [ -z "$ip" ] || [ "$ip" = "null" ] && continue
-    if [[ "$ip" == "127.0.0.1" ]] || [[ "$ip" == "localhost" ]]; then
+    # Local addresses need no prepare pass: there is nothing to reach over SSH.
+    if is_local_ip "$ip"; then
         continue
     fi
     inv_id="prep_${ip//./_}"
