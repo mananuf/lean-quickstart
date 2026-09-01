@@ -172,6 +172,19 @@ fi
 
 EXTRA_VARS="$EXTRA_VARS deployment_mode=$DEPLOYMENT_MODE"
 
+# The client and observability roles read the active validator config through
+# local_validator_config_path and reference it unquoted by default, so an unset
+# value aborts the run before any client is deployed. run-ansible.sh sets this
+# for the spin-node.sh path; set it here too. It must be absolute:
+# ansible-playbook runs with cwd ansible/, and lookup('file', ...) resolves
+# relative paths against that directory.
+_LOCAL_VC_PATH="${VALIDATOR_CONFIG:-$NETWORK_DIR_ABS/genesis/validator-config.yaml}"
+case "$_LOCAL_VC_PATH" in
+    /*) ;;
+    *) _LOCAL_VC_PATH="$SCRIPT_DIR/$_LOCAL_VC_PATH" ;;
+esac
+EXTRA_VARS="$EXTRA_VARS local_validator_config_path=$_LOCAL_VC_PATH"
+
 # The inventory is derived from the validator config, not checked in. spin-node.sh
 # builds it via run-ansible.sh; running this script directly has to build it too,
 # otherwise ansible parses nothing and falls back to an implicit localhost.
