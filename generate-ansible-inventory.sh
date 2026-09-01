@@ -99,21 +99,19 @@ is_local_ip() {
         is_remote=true
     fi
     
-    # Add node to the appropriate group
-    if [ "$is_remote" = true ]; then
-        # Remote deployment
-        yq eval -i ".all.children.$group_name.hosts.$node_name.ansible_host = \"$node_ip\"" "$OUTPUT_FILE"
-        yq eval -i ".all.children.$group_name.hosts.$node_name.node_name = \"$node_name\"" "$OUTPUT_FILE"
-        yq eval -i ".all.children.$group_name.hosts.$node_name.client_type = \"$client_type\"" "$OUTPUT_FILE"
-        yq eval -i ".all.children.$group_name.hosts.$node_name.quic_port = $node_quic" "$OUTPUT_FILE"
-    else
-        # Local deployment
-        yq eval -i ".all.children.$group_name.hosts.$node_name.ansible_host = \"localhost\"" "$OUTPUT_FILE"
+    # ansible_host always carries the configured IP, including for local nodes:
+    # roles select colocated nodes with
+    #   select(.enrFields.ip == "{{ ansible_host }}")
+    # against validator-config, so rewriting it to "localhost" matches nothing
+    # and leaves those lookups empty. Only the connection changes for local
+    # nodes; ansible ignores ansible_host when the connection is local.
+    yq eval -i ".all.children.$group_name.hosts.$node_name.ansible_host = \"$node_ip\"" "$OUTPUT_FILE"
+    if [ "$is_remote" = false ]; then
         yq eval -i ".all.children.$group_name.hosts.$node_name.ansible_connection = \"local\"" "$OUTPUT_FILE"
-        yq eval -i ".all.children.$group_name.hosts.$node_name.node_name = \"$node_name\"" "$OUTPUT_FILE"
-        yq eval -i ".all.children.$group_name.hosts.$node_name.client_type = \"$client_type\"" "$OUTPUT_FILE"
-        yq eval -i ".all.children.$group_name.hosts.$node_name.quic_port = $node_quic" "$OUTPUT_FILE"
     fi
+    yq eval -i ".all.children.$group_name.hosts.$node_name.node_name = \"$node_name\"" "$OUTPUT_FILE"
+    yq eval -i ".all.children.$group_name.hosts.$node_name.client_type = \"$client_type\"" "$OUTPUT_FILE"
+    yq eval -i ".all.children.$group_name.hosts.$node_name.quic_port = $node_quic" "$OUTPUT_FILE"
 done
 
 # One inventory host per remote IP for prepare.yml — avoids N parallel SSH/apt sessions
