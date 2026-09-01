@@ -13,6 +13,9 @@ CLEAN_DATA=""
 NETWORK_DIR=""
 VALIDATOR_CONFIG=""
 DEPLOYMENT_MODE="docker"
+# Metrics/logs label stamped into the prometheus and promtail configs.
+# Same default as spin-node.sh so both entry points behave alike.
+NETWORK_NAME="devnet-3"
 EXTRA_VARS=""
 
 # Color codes for output
@@ -36,6 +39,8 @@ Options:
   --clean-data              Clean data directories before deployment
   --validator-config PATH   Path to validator-config.yaml (default: genesis_bootnode)
   --deployment-mode MODE    Deployment mode: 'docker' or 'binary' (default: docker)
+  --network-name NAME       Metrics/logs network label, e.g. devnet-5
+                              (default: devnet-3, matching spin-node.sh)
   --playbook PLAYBOOK       Ansible playbook to run (default: site.yml)
                               Options: site.yml, deploy-nodes.yml, copy-genesis.yml
   --tags TAGS               Run only tasks with specific tags (comma-separated)
@@ -89,6 +94,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --deployment-mode)
             DEPLOYMENT_MODE="$2"
+            shift 2
+            ;;
+        --network-name)
+            NETWORK_NAME="$2"
             shift 2
             ;;
         --playbook)
@@ -184,6 +193,10 @@ case "$_LOCAL_VC_PATH" in
     *) _LOCAL_VC_PATH="$SCRIPT_DIR/$_LOCAL_VC_PATH" ;;
 esac
 EXTRA_VARS="$EXTRA_VARS local_validator_config_path=$_LOCAL_VC_PATH"
+
+# The prometheus and promtail templates reference network_name with no default,
+# so an unset value fails the observability role for every host.
+EXTRA_VARS="$EXTRA_VARS network_name=$NETWORK_NAME"
 
 # The inventory is derived from the validator config, not checked in. spin-node.sh
 # builds it via run-ansible.sh; running this script directly has to build it too,
