@@ -15,6 +15,9 @@
 
 - name: Copy Genesis Files to Remote Hosts
   hosts: all:!local
+  # add_host bypasses the host loop, which the `free` strategy in
+  # ansible.cfg rejects; this play runs linear so the group is built.
+  strategy: linear
   gather_facts: yes
   vars:
     validator_config_file: "{{ genesis_dir }}/validator-config.yaml"

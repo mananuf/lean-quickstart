@@ -3,6 +3,9 @@
 
 - name: Parse and validate node names
   hosts: localhost
+  # add_host bypasses the host loop, which the `free` strategy in
+  # ansible.cfg rejects; this play runs linear so the group is built.
+  strategy: linear
   connection: local
   gather_facts: no
   vars:

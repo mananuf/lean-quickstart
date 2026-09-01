@@ -172,9 +172,22 @@ fi
 
 EXTRA_VARS="$EXTRA_VARS deployment_mode=$DEPLOYMENT_MODE"
 
+# The inventory is derived from the validator config, not checked in. spin-node.sh
+# builds it via run-ansible.sh; running this script directly has to build it too,
+# otherwise ansible parses nothing and falls back to an implicit localhost.
+_INVENTORY="$ANSIBLE_DIR/inventory/hosts.yml"
+_INVENTORY_SRC="${VALIDATOR_CONFIG:-$NETWORK_DIR_ABS/genesis/validator-config.yaml}"
+if [ ! -f "$_INVENTORY_SRC" ]; then
+    echo -e "${RED}Validator config not found: $_INVENTORY_SRC${NC}" >&2
+    exit 1
+fi
+echo "Generating inventory from $_INVENTORY_SRC"
+mkdir -p "$ANSIBLE_DIR/inventory"
+"$SCRIPT_DIR/generate-ansible-inventory.sh" "$_INVENTORY_SRC" "$_INVENTORY"
+
 # Build ansible-playbook command
 ANSIBLE_CMD="ansible-playbook"
-ANSIBLE_CMD="$ANSIBLE_CMD -i $ANSIBLE_DIR/inventory/hosts.yml"
+ANSIBLE_CMD="$ANSIBLE_CMD -i $_INVENTORY"
 ANSIBLE_CMD="$ANSIBLE_CMD $ANSIBLE_DIR/playbooks/$PLAYBOOK"
 ANSIBLE_CMD="$ANSIBLE_CMD -e \"$EXTRA_VARS\""
 
